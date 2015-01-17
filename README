@@ -52,6 +52,10 @@ setup menu. f you change latitude or longitude, just delete the cached
 weather.json file and restart VDR to achieve new data for the newly configured
 location.
 
+You can configure your own API Key in Plugin Setup. If an own API Key is configured,
+you're allowed to change the update frequency from forecast.io individually, update
+frequency can then be a value between 1 and 24h.
+
 Usage:
 ------
 

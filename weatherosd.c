@@ -68,6 +68,8 @@ void cWeatherOsd::SetRootMenu(void) {
     Clear();
     SetTitle(tr("Weather Forecast"));
     
+    forecastIO->LockForecasts();
+
     cSkindesignerOsdItem *currentWeather = new cSkindesignerOsdItem();
     string itemLabelCurrent = tr("Current Weather");
     currentWeather->SetText(itemLabelCurrent.c_str());
@@ -187,6 +189,8 @@ void cWeatherOsd::SetRootMenu(void) {
         }
     }
 
+    forecastIO->UnlockForecasts();
+
     Add(nextDays, (lastRootMenuElement == 2)?true:false);
 
     Display();
@@ -198,15 +202,29 @@ void cWeatherOsd::SetDetailViewCurrent(void) {
     ClearTokens();
     Clear();
     SetTitle(tr("Current Weather"));
-    cForecast *current = forecastIO->GetCurrentForecast();
-    if (!current)
+
+    cForecast *current = NULL;
+    cForecasts *daily = NULL;
+    cForecast *today = NULL;
+
+    forecastIO->LockForecasts();
+    bool ok = true;
+    
+    current = forecastIO->GetCurrentForecast();
+    if (!current) ok = false;
+    
+    if (ok)
+        daily = forecastIO->GetDailyForecast();
+    if (!daily) ok = false;
+    
+    if (ok)
+        today = daily->GetFirstDaily();
+    if (!today) ok = false;
+    
+    if (!ok) {
+        forecastIO->UnlockForecasts();
         return;
-    cForecasts *daily = forecastIO->GetDailyForecast();
-    if (!daily)
-        return;
-    cForecast *today = daily->GetFirstDaily();
-    if (!today)
-        return;
+    }
 
     stringstream plainText;
     plainText << tr("Weather for") << " " << weatherConfig.city << " " << current->GetDateTimeString() << ": " <<  current->GetSummary() << "\n";
@@ -249,6 +267,8 @@ void cWeatherOsd::SetDetailViewCurrent(void) {
     AddStringToken("pressure", current->GetPressureString());
     AddStringToken("ozone", current->GetOzoneString());
 
+    forecastIO->UnlockForecasts();
+    
     Display();
 }
 
@@ -259,9 +279,12 @@ void cWeatherOsd::SetDetailViewHourly(void) {
     ClearTokens();
     SetTitle(tr("Weather in the next 48 Hours"));
 
+    forecastIO->LockForecasts();
     cForecasts *hourly = forecastIO->GetHourlyForecast();
-    if (!hourly)
+    if (!hourly) {
+        forecastIO->UnlockForecasts();
         return;
+    }
 
     stringstream plainText;
     cForecast *fc = hourly->GetFirstHourly();
@@ -304,7 +327,8 @@ void cWeatherOsd::SetDetailViewHourly(void) {
 
         fc = hourly->GetNext();
     }
-    
+    forecastIO->UnlockForecasts();
+
     SetText(plainText.str().c_str());
     Display();
 }
@@ -316,9 +340,12 @@ void cWeatherOsd::SetDetailViewDaily(void) {
     ClearTokens();
     SetTitle(tr("Weather the next 7 days"));
 
+    forecastIO->LockForecasts();
     cForecasts *daily = forecastIO->GetDailyForecast();
-    if (!daily)
+    if (!daily) {
+        forecastIO->UnlockForecasts();
         return;
+    }
 
     stringstream plainText;
     cForecast *fc = daily->GetFirstDaily();
@@ -365,6 +392,7 @@ void cWeatherOsd::SetDetailViewDaily(void) {
 
         fc = daily->GetNext();
     }
+    forecastIO->UnlockForecasts();
     
     SetText(plainText.str().c_str());
     Display();

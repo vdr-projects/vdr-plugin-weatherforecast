@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: vdr-weatherforecast 0.0.1\n"
 "Report-Msgid-Bugs-To: <see README>\n"
-"POT-Creation-Date: 2015-01-14 13:26+0100\n"
+"POT-Creation-Date: 2015-01-16 14:50+0100\n"
 "PO-Revision-Date: 2015-01-12 11:46+0100\n"
 "Last-Translator: Louis Braun <louis.braun@gmx.de>\n"
 "Language-Team: \n"
@@ -19,10 +19,16 @@ msgid "City"
 msgstr "Wohnort"
 
 msgid "Latitude"
-msgstr "Latítude"
+msgstr "Latitude"
 
 msgid "Longitude"
 msgstr "Longitude"
+
+msgid "API Key"
+msgstr ""
+
+msgid "Update Frequency in hours"
+msgstr ""
 
 msgid "Weather Forecast"
 msgstr ""

@@ -18,7 +18,7 @@
 //***************************************************************************
 // Constants
 //***************************************************************************
-static const char *VERSION        = "0.0.1";
+static const char *VERSION        = "0.0.2";
 static const char *DESCRIPTION    = "Weatherforecast based on forecast.io";
 static const char *MAINMENUENTRY  = "WeatherForecast";
 
@@ -61,8 +61,9 @@ cPluginWeatherforecast::cPluginWeatherforecast(void) {
 }
 
 cPluginWeatherforecast::~cPluginWeatherforecast() {
-    if (forecastIO)
+    if (forecastIO) {
         delete forecastIO;
+    }
 }
 
 const char *cPluginWeatherforecast::CommandLineHelp(void) {
@@ -108,7 +109,9 @@ bool cPluginWeatherforecast::Start(void) {
 }
 
 void cPluginWeatherforecast::Stop(void) {
- 
+    if (forecastIO) {
+        forecastIO->Stop();
+    }
 }
 
 void cPluginWeatherforecast::Housekeeping(void) {
@@ -145,7 +148,11 @@ bool cPluginWeatherforecast::Service(const char *Id, void *Data) {
         return false;
     if (strcmp(Id, "GetCurrentWeather") == 0) {
         cServiceCurrentWeather* call = (cServiceCurrentWeather*) Data;
-        return forecastIO->SetCurrentWeather(call);
+        bool ok = false;
+        forecastIO->LockForecasts();
+        ok = forecastIO->SetCurrentWeather(call);
+        forecastIO->UnlockForecasts();
+        return ok;
     }
     return false;
 }

@@ -13,6 +13,8 @@ class cWeatherforecastSetup : public cMenuSetupPage {
         char city[100];
         char lat[10];
         char lon[10];
+        char userApiKey[100];
+        int userHoursToUpdate;
     private:
         cWeatherforecastConfig data;
         void Setup(void);

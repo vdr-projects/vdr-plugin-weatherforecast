@@ -11,9 +11,8 @@ using namespace std;
 extern cWeatherforecastConfig weatherConfig;
 
 cForecastIO::cForecastIO(string cacheDir) {
-    this->cacheDir = cacheDir;
-    ok = false;
-    cacheDuration = 60 * 60 * weatherConfig.hoursToUpdate;
+    forecastFile = *cString::sprintf("%s/%s", cacheDir.c_str(), "weather.json");
+    cacheDurationDefault = 60 * 60 * weatherConfig.hoursToUpdate;
     apiKey = "9830052ef63efbec84ec0639e9a205d2";
     string osdLanguage = Setup.OSDLanguage;
     language = osdLanguage.substr(0,2);
@@ -27,27 +26,42 @@ cForecastIO::cForecastIO(string cacheDir) {
 }
 
 cForecastIO::~cForecastIO() {
-    if (current)
-        delete current;
-    if (hourly)
-        delete hourly;
-    if (daily)
-        delete daily;
+    Clear();
 }
 
 /*****************************************************************
 * PUBLIC FUNCTIONS
 *****************************************************************/
 void cForecastIO::Action(void) {
-    ok = ReadForecast();
+    loopActive = true;
+    ReadForecastInitial();
+    waitMutex.Lock();
+    while (loopActive && Running()) {
+        waitCondition.TimedWait(waitMutex, 1000 * 60);
+        if (!loopActive)
+            return;
+        if (!CacheFileValid()) {
+            ReadForecast();
+        } 
+    }
+}
+
+void cForecastIO::Stop() { 
+    loopActive = false;
+    waitCondition.Broadcast();
+    Cancel(1);
+    while (Active())
+        cCondWait::SleepMs(10);
 }
 
 cForecast *cForecastIO::GetCurrentForecast(void) {
     time_t now = time(0);
-    if (current && current->TimeMatch(now))
+    if (current && current->TimeMatch(now)) {
         return current;
-    if (hourly)
+    }
+    if (hourly) {
         return hourly->GetCurrent();
+    }
     return NULL;
 }
 
@@ -55,6 +69,7 @@ bool cForecastIO::SetCurrentWeather(cServiceCurrentWeather *call) {
     cForecast *currentForecast = GetCurrentForecast();
     if (!currentForecast)
         return false;
+
     call->timeStamp = currentForecast->GetDateTimeString();
     call->temperature = currentForecast->GetTemperatureString();
     call->apparentTemperature = currentForecast->GetApparentTemperatureString();
@@ -75,6 +90,7 @@ bool cForecastIO::SetCurrentWeather(cServiceCurrentWeather *call) {
     cForecast *dailyForecast = daily->GetFirstDaily();
     if (!dailyForecast)
         return true;
+
     call->minTemperature = dailyForecast->GetTemperatureMinString();
     call->maxTemperature = dailyForecast->GetTemperatureMaxString();
 
@@ -84,41 +100,93 @@ bool cForecastIO::SetCurrentWeather(cServiceCurrentWeather *call) {
 /*****************************************************************
 * PRIVATE FUNCTIONS
 *****************************************************************/
-bool cForecastIO::ReadForecast(void) {
-    string forecastFile = *cString::sprintf("%s/%s", cacheDir.c_str(), "weather.json");
-    dsyslog("weatherforecast: trying to read cached forecast from %s", forecastFile.c_str());
-    string forecastJson = "";
-    if (!FileExists(forecastFile)) {
-        //get new from forecast.io
-        dsyslog("weatherforecast: no cached forecast, fetching newly from forecast.io");
-        forecastJson = FetchOnlineForecast();
-        WriteIntoFile(forecastFile, forecastJson);
-    } else {
-        //check if cached file is too old
-        time_t fileCreation = FileCreationTime(forecastFile);
-        time_t now = time(0);
-        int age = now - fileCreation;
-        int ageHours = age / 3600;
-        int ageMinutes = (age%3600) / 60;
-        if (age > cacheDuration) {
-            //get new from forecast.io
-            dsyslog("weatherforecast: cached forecast is with %dh %dmin too old, fetching newly from forecast.io", ageHours, ageMinutes);
-            forecastJson = FetchOnlineForecast();
-            WriteIntoFile(forecastFile, forecastJson);
-        } else {
-            //using cached data
-            dsyslog("weatherforecast: cached forecast is only %dh %dmin old, using cached forecast", ageHours, ageMinutes);
-            forecastJson = ReadFromFile(forecastFile);
-        }
-    }
-    ParseForecast(forecastJson);
 
+void cForecastIO::Clear(void) {
+    if (current) {
+        delete current;
+        current = NULL;
+    }
+    if (hourly) {
+        delete hourly;
+        hourly = NULL;
+    }
+    if (daily) {
+        delete daily;
+        daily = NULL;
+    }
+}
+
+bool cForecastIO::CheckUserApiKey(void) {
+    if (weatherConfig.userApiKey.size() == 0)
+        return false;
+    if (weatherConfig.userApiKey.compare(apiKey) == 0) {
+        return false;
+    }
     return true;
 }
 
+int cForecastIO::CalculateCachDuration(void) {
+    if (!CheckUserApiKey())
+        return cacheDurationDefault;
+    if (weatherConfig.userHoursToUpdate > 0 && weatherConfig.userHoursToUpdate <= 24) {
+        return weatherConfig.userHoursToUpdate * 60 * 60;
+    }
+    return cacheDurationDefault;    
+}
+
+bool cForecastIO::CacheFileValid(void) {
+    if (!FileExists(forecastFile)) {
+        dsyslog("weatherforecast: no cached forecast available");
+        return false;
+    }
+    int cacheDuration = CalculateCachDuration();
+    time_t fileCreation = FileCreationTime(forecastFile);
+    time_t now = time(0);
+    int age = now - fileCreation;
+    int ageHours = age / 3600;
+    int ageMinutes = (age%3600) / 60;
+    if (age > cacheDuration) {
+        dsyslog("weatherforecast: cached forecast is outdated (age %dh %dmin, cache duration %dh)", ageHours, ageMinutes, cacheDuration / 3600);
+        return false;
+    }
+    return true;
+}
+
+void cForecastIO::ReadForecastInitial(void) {
+    string forecastJson = "";
+    if (!CacheFileValid()) {
+        //get new from forecast.io
+        dsyslog("weatherforecast: fetching forecast newly from forecast.io");
+        forecastJson = FetchOnlineForecast();
+        WriteIntoFile(forecastFile, forecastJson);
+    } else {
+        //using cached data
+        dsyslog("weatherforecast: using cached forecast");
+        forecastJson = ReadFromFile(forecastFile);
+    }
+    ParseForecast(forecastJson);
+
+}
+
+void cForecastIO::ReadForecast(void) {
+    dsyslog("weatherforecast: updating forecast from forecast.io");
+    string forecastJson = "";
+    forecastJson = FetchOnlineForecast();
+    if (forecastJson.size() > 0) {
+        WriteIntoFile(forecastFile, forecastJson);
+        Lock();
+        Clear();
+        ParseForecast(forecastJson);
+        Unlock();
+    }
+}
+
 string cForecastIO::FetchOnlineForecast(void) {
+    string myApiKey = apiKey;
+    if (CheckUserApiKey())
+        myApiKey = weatherConfig.userApiKey;
     stringstream url;
-    url << baseURL << "/" << apiKey;
+    url << baseURL << "/" << myApiKey;
     url << "/" << latitude << "," << longitude;
     url << "?lang=" << language << "&units=" << unit;
     string outputForecastIO;
