@@ -18,7 +18,7 @@
 //***************************************************************************
 // Constants
 //***************************************************************************
-static const char *VERSION        = "0.0.2";
+static const char *VERSION        = "0.0.3";
 static const char *DESCRIPTION    = "Weatherforecast based on forecast.io";
 static const char *MAINMENUENTRY  = tr("WeatherForecast");
 

@@ -16,7 +16,7 @@ VERSION = $(shell grep 'static const char \*VERSION *=' $(PLUGIN).c | awk '{ pri
 ### The directory environment:
 
 # Use package data if installed...otherwise assume we're under the VDR source directory:
-PKGCFG = $(if $(VDRDIR),$(shell pkg-config --variable=$(1) $(VDRDIR)/vdr.pc),$(shell PKG_CONFIG_PATH="$$PKG_CONFIG_PATH:../../.." pkg-config --variable=$(1) vdr))
+PKGCFG = $(if $(VDRDIR),$(shell pkg-config --variable=$(1) $(VDRDIR)/vdr.pc),$(shell pkg-config --variable=$(1) vdr || pkg-config --variable=$(1) ../../../vdr.pc))
 LIBDIR = $(call PKGCFG,libdir)
 LOCDIR = $(call PKGCFG,locdir)
 PLGCFG = $(call PKGCFG,plgcfg)
@@ -59,10 +59,11 @@ LIBS += $(shell pkg-config --cflags --libs jansson)
 OBJS = $(PLUGIN).o \
        config.o \
        setup.o \
-	   libskindesigner/skindesignerosdbase.o \
-	   tools/curlfuncs.o \
-	   tools/jsonhelpers.o \
-	   tools/filesystem.o \
+       libskindesigner/skindesignerosdbase.o \
+       libskindesigner/osdelements.o \
+       tools/curlfuncs.o \
+       tools/jsonhelpers.o \
+       tools/filesystem.o \
        libforecastio/forecastio.o \
        libforecastio/forecasts.o \
        libforecastio/forecast.o \

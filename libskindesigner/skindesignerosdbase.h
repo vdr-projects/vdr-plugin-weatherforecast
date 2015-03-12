@@ -10,6 +10,26 @@
 #include <vdr/plugin.h>
 #include "services.h"
 
+class cOsdView;
+
+/**********************************************************************
+* cSkindesignerOsdObject
+**********************************************************************/
+class cSkindesignerOsdObject : public cOsdObject {
+protected:
+    string pluginName;
+    cPlugin *pSkinDesigner;
+    bool InitSkindesignerInterface(string pluginName);
+    cOsdView *GetOsdView(int viewID, int subViewID = -1);
+public:
+    cSkindesignerOsdObject(void);
+    virtual ~cSkindesignerOsdObject();
+    virtual void Show(void) {};
+};
+
+/**********************************************************************
+* cSkindesignerOsdItem
+**********************************************************************/
 class cSkindesignerOsdItem : public cOsdItem {
 private:
     cSDDisplayMenu *sdDisplayMenu;
@@ -28,7 +48,9 @@ public:
     void AddLoopToken(string loopName, map<string, string> &tokens);
 };
 
-
+/**********************************************************************
+* cSkindesignerOsdMenu
+**********************************************************************/
 class cSkindesignerOsdMenu : public cOsdMenu {
 private:
     bool init;

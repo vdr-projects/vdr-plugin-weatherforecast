@@ -1,4 +1,41 @@
 #include "skindesignerosdbase.h"
+#include "osdelements.h"
+
+/**********************************************************************
+* cSkindesignerOsdObject
+**********************************************************************/
+
+cSkindesignerOsdObject::cSkindesignerOsdObject(void) {
+    pSkinDesigner = NULL;
+    pluginName = "";
+}
+
+cSkindesignerOsdObject::~cSkindesignerOsdObject() {
+}
+
+bool cSkindesignerOsdObject::InitSkindesignerInterface(string pluginName) {
+    this->pluginName = pluginName;
+    pSkinDesigner = cPluginManager::GetPlugin("skindesigner");
+    if (!pSkinDesigner) {
+        return false;   
+    }
+    return true;
+}
+
+cOsdView *cSkindesignerOsdObject::GetOsdView(int viewID, int subViewID) {
+    cSkinDisplayPlugin *displayPlugin = NULL;
+    cOsdView *view = NULL;
+    GetDisplayPlugin call;
+    call.pluginName = pluginName;
+    call.viewID = viewID;
+    call.subViewID = subViewID;
+    bool ok = pSkinDesigner->Service("GetDisplayPlugin", &call);
+    if (ok) {
+        displayPlugin = call.displayPlugin;
+        view = new cOsdView(displayPlugin);
+    }
+    return view;
+}
 
 /**********************************************************************
 * cSkindesignerOsdItem
