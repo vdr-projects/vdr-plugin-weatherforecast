@@ -64,13 +64,13 @@ eOSState cWeatherOsd::ProcessKey(eKeys key) {
 
 void cWeatherOsd::SetRootMenu(void) {
     isDetailedView = false;
-    SetPluginMenu(meRoot, mtList);
+    SetPluginMenu(meRoot, skindesignerapi::mtList);
     Clear();
     SetTitle(tr("Weather Forecast"));
     
     forecastIO->LockForecasts();
 
-    cSkindesignerOsdItem *currentWeather = new cSkindesignerOsdItem();
+    skindesignerapi::cSkindesignerOsdItem *currentWeather = new skindesignerapi::cSkindesignerOsdItem();
     string itemLabelCurrent = tr("Current Weather");
     currentWeather->SetText(itemLabelCurrent.c_str());
     currentWeather->AddStringToken("menuitemtext", itemLabelCurrent.c_str());
@@ -102,7 +102,7 @@ void cWeatherOsd::SetRootMenu(void) {
     }
     Add(currentWeather, (lastRootMenuElement == 0)?true:false);
 
-    cSkindesignerOsdItem *nextHours = new cSkindesignerOsdItem();
+    skindesignerapi::cSkindesignerOsdItem *nextHours = new skindesignerapi::cSkindesignerOsdItem();
     string itemLabelNextHours = tr("Next 48 Hours");
     nextHours->SetText(itemLabelNextHours.c_str());
     nextHours->AddStringToken("menuitemtext", itemLabelNextHours.c_str());
@@ -146,7 +146,7 @@ void cWeatherOsd::SetRootMenu(void) {
 
     Add(nextHours, (lastRootMenuElement == 1)?true:false);
 
-    cSkindesignerOsdItem *nextDays = new cSkindesignerOsdItem();
+    skindesignerapi::cSkindesignerOsdItem *nextDays = new skindesignerapi::cSkindesignerOsdItem();
     string itemLabelNextDays = tr("Next 7 Days");
     nextDays->SetText(itemLabelNextDays.c_str());
     nextDays->AddStringToken("menuitemtext", itemLabelNextDays.c_str());
@@ -198,7 +198,7 @@ void cWeatherOsd::SetRootMenu(void) {
 
 void cWeatherOsd::SetDetailViewCurrent(void) {
     isDetailedView = true;
-    SetPluginMenu(meDetailCurrent, mtText);
+    SetPluginMenu(meDetailCurrent, skindesignerapi::mtText);
     ClearTokens();
     Clear();
     SetTitle(tr("Current Weather"));
@@ -274,7 +274,7 @@ void cWeatherOsd::SetDetailViewCurrent(void) {
 
 void cWeatherOsd::SetDetailViewHourly(void) {
     isDetailedView = true;
-    SetPluginMenu(meDetailHourly, mtText);
+    SetPluginMenu(meDetailHourly, skindesignerapi::mtText);
     Clear();
     ClearTokens();
     SetTitle(tr("Weather in the next 48 Hours"));
@@ -335,7 +335,7 @@ void cWeatherOsd::SetDetailViewHourly(void) {
 
 void cWeatherOsd::SetDetailViewDaily(void) {
     isDetailedView = true;
-    SetPluginMenu(meDetailDaily, mtText);
+    SetPluginMenu(meDetailDaily, skindesignerapi::mtText);
     Clear();
     ClearTokens();
     SetTitle(tr("Weather the next 7 days"));

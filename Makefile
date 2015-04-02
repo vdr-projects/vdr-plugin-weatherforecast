@@ -54,13 +54,14 @@ DEFINES += -DPLUGIN_NAME_I18N='"$(PLUGIN)"'
 LIBS += $(shell pkg-config --libs libcurl)
 LIBS += $(shell pkg-config --cflags --libs jansson)
 
+INCLUDES += $(shell pkg-config --cflags libskindesignerapi)
+LIBS += $(shell pkg-config --libs libskindesignerapi)
+
 ### The object files (add further files here):
 
 OBJS = $(PLUGIN).o \
        config.o \
        setup.o \
-       libskindesigner/skindesignerosdbase.o \
-       libskindesigner/osdelements.o \
        tools/curlfuncs.o \
        tools/jsonhelpers.o \
        tools/filesystem.o \

@@ -7,11 +7,11 @@
  */
 
 #include <vdr/plugin.h>
+#include <libskindesignerapi/skindesignerapi.h>
 #include "config.h"
 #include "setup.h"
 #include "libforecastio/forecastio.h"
 #include "libforecastio/locator.h"
-#include "libskindesigner/services.h"
 #include "weatherosd.h"
 #include "services.h"
 
@@ -92,19 +92,16 @@ bool cPluginWeatherforecast::Start(void) {
     forecastIO = new cForecastIO(cacheDir);
     forecastIO->Start();
 
-    RegisterPlugin reg;
-    reg.name = "weatherforecast";
-    reg.SetMenu(meRoot, "weatherforecast.xml");
-    reg.SetMenu(meDetailCurrent, "weatherforecastdetailcurrent.xml");
-    reg.SetMenu(meDetailHourly, "weatherforecastdetailhourly.xml");
-    reg.SetMenu(meDetailDaily, "weatherforecastdetaildaily.xml");
-    static cPlugin *pSkinDesigner = cPluginManager::GetPlugin("skindesigner");
-    if (pSkinDesigner) {
-      pSkinDesigner->Service("RegisterPlugin", &reg);
-    } else {
-      esyslog("weatherforecast: skindesigner not available");
+    skindesignerapi::cPluginStructure plugStruct;
+    plugStruct.name = "weatherforecast";
+    plugStruct.SetMenu(meRoot, "weatherforecast.xml");
+    plugStruct.SetMenu(meDetailCurrent, "weatherforecastdetailcurrent.xml");
+    plugStruct.SetMenu(meDetailHourly, "weatherforecastdetailhourly.xml");
+    plugStruct.SetMenu(meDetailDaily, "weatherforecastdetaildaily.xml");
+    
+    if (!skindesignerapi::SkindesignerAPI::RegisterPlugin(&plugStruct)) {
+        esyslog("weatherforecast: skindesigner not available");
     }
-
     return true;
 }
 

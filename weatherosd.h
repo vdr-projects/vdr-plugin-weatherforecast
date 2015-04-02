@@ -3,7 +3,8 @@
 
 #include <vdr/osdbase.h>
 #include <string>
-#include "libskindesigner/skindesignerosdbase.h"
+#include <libskindesignerapi/skindesignerapi.h>
+#include <libskindesignerapi/skindesignerosdbase.h>
 #include "libforecastio/forecastio.h"
 
 enum eMenus {
@@ -13,7 +14,7 @@ enum eMenus {
     meDetailDaily
 };
 
-class cWeatherOsd : public cSkindesignerOsdMenu {
+class cWeatherOsd : public skindesignerapi::cSkindesignerOsdMenu {
 private:
     bool isDetailedView;
     int lastRootMenuElement;
