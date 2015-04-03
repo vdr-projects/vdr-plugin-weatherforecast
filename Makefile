@@ -56,6 +56,7 @@ LIBS += $(shell pkg-config --cflags --libs jansson)
 
 INCLUDES += $(shell pkg-config --cflags libskindesignerapi)
 LIBS += $(shell pkg-config --libs libskindesignerapi)
+DEFINES += -DLIBSKINDESIGNERAPIVERSION='"$(shell pkg-config --modversion libskindesignerapi)"'
 
 ### The object files (add further files here):
 

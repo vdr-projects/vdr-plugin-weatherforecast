@@ -94,6 +94,7 @@ bool cPluginWeatherforecast::Start(void) {
 
     skindesignerapi::cPluginStructure plugStruct;
     plugStruct.name = "weatherforecast";
+    plugStruct.libskindesignerAPIVersion = LIBSKINDESIGNERAPIVERSION;
     plugStruct.SetMenu(meRoot, "weatherforecast.xml");
     plugStruct.SetMenu(meDetailCurrent, "weatherforecastdetailcurrent.xml");
     plugStruct.SetMenu(meDetailHourly, "weatherforecastdetailhourly.xml");
