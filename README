@@ -21,6 +21,7 @@ forecast.io data.
 Requirements:
 -------------
 - VDR 1.7.x     
+- libSkindesignerAPI (see skindesigner README for installation procedure)
 - libcurl
 - jansson
 
