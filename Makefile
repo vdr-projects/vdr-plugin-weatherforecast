@@ -54,9 +54,25 @@ DEFINES += -DPLUGIN_NAME_I18N='"$(PLUGIN)"'
 LIBS += $(shell pkg-config --libs libcurl)
 LIBS += $(shell pkg-config --cflags --libs jansson)
 
+ifdef LCLBLD
+
+SKINDESIGNER_PATH = $(shell pwd)/../skindesigner
+LIBSKINDESIGNERAPI_PATH = $(SKINDESIGNER_PATH)/libskindesignerapi
+
+# make sure the lib and pkg-config file exists
+DUMMY:=$(shell $(MAKE) -C $(LIBSKINDESIGNERAPI_PATH) LCLBLD=$(LCLBLD))
+
+INCLUDES += -I$(SKINDESIGNER_PATH)
+LIBS += -L$(LIBSKINDESIGNERAPI_PATH) $(shell pkg-config --libs $(LIBSKINDESIGNERAPI_PATH)/libskindesignerapi.pc)
+DEFINES += -DLIBSKINDESIGNERAPIVERSION='"$(shell pkg-config --modversion $(LIBSKINDESIGNERAPI_PATH)/libskindesignerapi.pc)"'
+
+else
+
 INCLUDES += $(shell pkg-config --cflags libskindesignerapi)
 LIBS += $(shell pkg-config --libs libskindesignerapi)
 DEFINES += -DLIBSKINDESIGNERAPIVERSION='"$(shell pkg-config --modversion libskindesignerapi)"'
+
+endif
 
 ### The object files (add further files here):
 
