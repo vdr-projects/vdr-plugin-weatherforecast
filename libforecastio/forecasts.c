@@ -48,6 +48,26 @@ void cForecasts::SetForecast(json_t *forecast) {
     }
 }
 
+int cForecasts::NumHourly(void) {
+    int num = 0;
+    cForecast *f = GetFirstHourly();
+    while (f) {
+        num++;
+        f = GetNext();
+    }
+    return num;
+}
+
+int cForecasts::NumDaily(void) {
+    int num = 0;
+    cForecast *f = GetFirstDaily();
+    while (f) {
+        num++;
+        f = GetNext();
+    }
+    return num;
+}
+
 cForecast *cForecasts::GetForecast(int dataPoint) {
     if (!dataPoints)
         return NULL;

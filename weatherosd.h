@@ -6,13 +6,7 @@
 #include <libskindesignerapi/skindesignerapi.h>
 #include <libskindesignerapi/skindesignerosdbase.h>
 #include "libforecastio/forecastio.h"
-
-enum eMenus {
-    meRoot,
-    meDetailCurrent,
-    meDetailHourly,
-    meDetailDaily
-};
+#include "definitions.h"
 
 class cWeatherOsd : public skindesignerapi::cSkindesignerOsdMenu {
 private:
@@ -24,9 +18,10 @@ private:
     void SetDetailViewHourly(void);
     void SetDetailViewDaily(void);
 public:
-    cWeatherOsd(cForecastIO *forecastIO);
+    cWeatherOsd(cForecastIO *forecastIO, skindesignerapi::cPluginStructure *plugStruct);
     virtual ~cWeatherOsd();
     virtual eOSState ProcessKey(eKeys key);
+    static void DefineTokens(eMenus menu, skindesignerapi::cTokenContainer *tk);
 };
 
 #endif //__WEATHEROSD_H

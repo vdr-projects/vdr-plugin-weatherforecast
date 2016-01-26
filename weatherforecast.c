@@ -18,9 +18,8 @@
 //***************************************************************************
 // Constants
 //***************************************************************************
-static const char *VERSION        = "0.1.1";
+static const char *VERSION        = "0.2.0";
 static const char *DESCRIPTION    = "Weatherforecast based on forecast.io";
-static const char *MAINMENUENTRY  = tr("WeatherForecast");
 
 //***************************************************************************
 // Globals
@@ -32,6 +31,7 @@ cWeatherforecastConfig weatherConfig;
 //***************************************************************************
 class cPluginWeatherforecast : public cPlugin {
 private:
+    skindesignerapi::cPluginStructure *plugStruct;
     cForecastIO *forecastIO;
 public:
     cPluginWeatherforecast(void);
@@ -47,7 +47,7 @@ public:
     virtual void MainThreadHook(void);
     virtual cString Active(void);
     virtual time_t WakeupTime(void);
-    virtual const char *MainMenuEntry(void) { return MAINMENUENTRY; }
+    virtual const char *MainMenuEntry(void) { return tr("WeatherForecast"); }
     virtual cOsdObject *MainMenuAction(void);
     virtual cMenuSetupPage *SetupMenu(void);
     virtual bool SetupParse(const char *Name, const char *Value);
@@ -57,13 +57,13 @@ public:
 };
 
 cPluginWeatherforecast::cPluginWeatherforecast(void) {
+    plugStruct = NULL;
     forecastIO = NULL;
 }
 
 cPluginWeatherforecast::~cPluginWeatherforecast() {
-    if (forecastIO) {
-        delete forecastIO;
-    }
+    delete forecastIO;
+    delete plugStruct;
 }
 
 const char *cPluginWeatherforecast::CommandLineHelp(void) {
@@ -91,17 +91,31 @@ bool cPluginWeatherforecast::Start(void) {
     string cacheDir = cPlugin::CacheDirectory(PLUGIN_NAME_I18N);
     forecastIO = new cForecastIO(cacheDir);
     forecastIO->Start();
-
-    skindesignerapi::cPluginStructure plugStruct;
-    plugStruct.name = "weatherforecast";
-    plugStruct.libskindesignerAPIVersion = LIBSKINDESIGNERAPIVERSION;
-    plugStruct.SetMenu(meRoot, "weatherforecast.xml");
-    plugStruct.SetMenu(meDetailCurrent, "weatherforecastdetailcurrent.xml");
-    plugStruct.SetMenu(meDetailHourly, "weatherforecastdetailhourly.xml");
-    plugStruct.SetMenu(meDetailDaily, "weatherforecastdetaildaily.xml");
     
-    if (!skindesignerapi::SkindesignerAPI::RegisterPlugin(&plugStruct)) {
+    plugStruct = new skindesignerapi::cPluginStructure();
+    plugStruct->name = "weatherforecast";
+    plugStruct->libskindesignerAPIVersion = LIBSKINDESIGNERAPIVERSION;
+
+    skindesignerapi::cTokenContainer *tkMenuRoot = new skindesignerapi::cTokenContainer();
+    cWeatherOsd::DefineTokens(eMenus::root, tkMenuRoot);
+    plugStruct->RegisterMenu((int)eMenus::root, skindesignerapi::mtList, "weatherforecast.xml", tkMenuRoot);
+
+    skindesignerapi::cTokenContainer *tkDetailCurrent = new skindesignerapi::cTokenContainer();
+    cWeatherOsd::DefineTokens(eMenus::detailCurrent, tkDetailCurrent);
+    plugStruct->RegisterMenu((int)eMenus::detailCurrent, skindesignerapi::mtText, "weatherforecastdetailcurrent.xml", tkDetailCurrent);
+
+    skindesignerapi::cTokenContainer *tkDetailHourly = new skindesignerapi::cTokenContainer();
+    cWeatherOsd::DefineTokens(eMenus::detailHourly, tkDetailHourly);
+    plugStruct->RegisterMenu((int)eMenus::detailHourly, skindesignerapi::mtText, "weatherforecastdetailhourly.xml", tkDetailHourly);
+
+    skindesignerapi::cTokenContainer *tkDetailDaily = new skindesignerapi::cTokenContainer();
+    cWeatherOsd::DefineTokens(eMenus::detailDaily, tkDetailDaily);
+    plugStruct->RegisterMenu((int)eMenus::detailDaily, skindesignerapi::mtText, "weatherforecastdetaildaily.xml", tkDetailDaily);
+
+    if (!skindesignerapi::SkindesignerAPI::RegisterPlugin(plugStruct)) {
         esyslog("weatherforecast: skindesigner not available");
+    } else {
+        dsyslog("weatherforecast: successfully registered at skindesigner, id %d", plugStruct->id);
     }
     return true;
 }
@@ -129,7 +143,7 @@ time_t cPluginWeatherforecast::WakeupTime(void) {
 }
 
 cOsdObject *cPluginWeatherforecast::MainMenuAction(void) {
-    cOsdObject *menu = new cWeatherOsd(forecastIO);
+    cWeatherOsd *menu = new cWeatherOsd(forecastIO, plugStruct);
     return menu;
 }
 

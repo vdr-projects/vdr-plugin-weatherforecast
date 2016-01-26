@@ -67,6 +67,7 @@ public:
     float GetApparentTemperature(void) { return apparentTemperature; };
     float GetHumidity(void) { return humidity; };
     float GetWindSpeed(void) { return windSpeed; };
+    int GetWindSpeedKnots(void) { return (windSpeed+10)/6; };
     int GetWindBearing(void) { return windBearing; };
     float GetVisibility(void) { return visibility; };
     float GetCloudCover(void) { return cloudCover; };

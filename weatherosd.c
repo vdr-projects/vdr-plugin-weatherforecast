@@ -4,16 +4,14 @@
 
 extern cWeatherforecastConfig weatherConfig;
 
-cWeatherOsd::cWeatherOsd(cForecastIO *forecastIO) : cSkindesignerOsdMenu("Weather Forecast") {
+cWeatherOsd::cWeatherOsd(cForecastIO *forecastIO, skindesignerapi::cPluginStructure *plugStruct) : cSkindesignerOsdMenu(plugStruct, "Weather Forecast") {
     isDetailedView = false;
     lastRootMenuElement = 0;
-    SetPluginName("weatherforecast");
     this->forecastIO = forecastIO;
     SetRootMenu();
 }
 
 cWeatherOsd::~cWeatherOsd(void) {
-    
 }
 
 eOSState cWeatherOsd::ProcessKey(eKeys key) {
@@ -64,128 +62,149 @@ eOSState cWeatherOsd::ProcessKey(eKeys key) {
 
 void cWeatherOsd::SetRootMenu(void) {
     isDetailedView = false;
-    SetPluginMenu(meRoot, skindesignerapi::mtList);
+    SetPluginMenu((int)eMenus::root, skindesignerapi::mtList);
     Clear();
     SetTitle(tr("Weather Forecast"));
     
     forecastIO->LockForecasts();
 
-    skindesignerapi::cSkindesignerOsdItem *currentWeather = new skindesignerapi::cSkindesignerOsdItem();
+    skindesignerapi::cTokenContainer *tkRoot = GetTokenContainer((int)eMenus::root);
+    skindesignerapi::cSkindesignerOsdItem *currentWeather = new skindesignerapi::cSkindesignerOsdItem(tkRoot);
+
     string itemLabelCurrent = tr("Current Weather");
     currentWeather->SetText(itemLabelCurrent.c_str());
-    currentWeather->AddStringToken("menuitemtext", itemLabelCurrent.c_str());
-    currentWeather->AddIntToken("iscurrent", 1);
-    currentWeather->AddIntToken("ishourly", 0);
-    currentWeather->AddIntToken("isdaily", 0);
-    currentWeather->AddStringToken("city", weatherConfig.city);
-    currentWeather->AddStringToken("latitude", FloatToString(weatherConfig.lat));
-    currentWeather->AddStringToken("longitude", FloatToString(weatherConfig.lon));
+    currentWeather->AddStringToken((int)eRootMenuST::menuitemtext, itemLabelCurrent.c_str());
+    currentWeather->AddIntToken((int)eRootMenuIT::iscurrent, 1);
+    currentWeather->AddIntToken((int)eRootMenuIT::ishourly, 0);
+    currentWeather->AddIntToken((int)eRootMenuIT::isdaily, 0);
+    currentWeather->AddStringToken((int)eRootMenuST::city, weatherConfig.city.c_str());
+    currentWeather->AddStringToken((int)eRootMenuST::latitude, FloatToString(weatherConfig.lat).c_str());
+    currentWeather->AddStringToken((int)eRootMenuST::longitude, FloatToString(weatherConfig.lon).c_str());
 
     cForecast *currentForecast = forecastIO->GetCurrentForecast();
     if (currentForecast) {
-        currentWeather->AddStringToken("timestamp", currentForecast->GetDateTimeString());
-        currentWeather->AddStringToken("temperature", currentForecast->GetTemperatureString());
-        currentWeather->AddStringToken("apparenttemperature", currentForecast->GetApparentTemperatureString());
-        currentWeather->AddStringToken("summary", currentForecast->GetSummary());
-        currentWeather->AddStringToken("icon", currentForecast->GetIcon());
-        currentWeather->AddStringToken("precipitationintensity", currentForecast->GetPrecipIntensityString());
-        currentWeather->AddIntToken("precipitationprobability", currentForecast->GetPrecipProbabilityPercent());
-        currentWeather->AddStringToken("precipitationtype", currentForecast->GetPercipType());
-        currentWeather->AddIntToken("humidity", currentForecast->GetHumidityPercent());
-        currentWeather->AddStringToken("windspeed", currentForecast->GetWindSpeedString());
-        currentWeather->AddIntToken("windbearing", currentForecast->GetWindBearing());
-        currentWeather->AddStringToken("windbearingstring", currentForecast->GetWindBearingString());
-        currentWeather->AddStringToken("visibility", currentForecast->GetVisibilityString());
-        currentWeather->AddIntToken("cloudcover", currentForecast->GetCloudCoverPercent());
-        currentWeather->AddStringToken("pressure", currentForecast->GetPressureString());
-        currentWeather->AddStringToken("ozone", currentForecast->GetOzoneString());
+        currentWeather->AddStringToken((int)eRootMenuST::timestamp, currentForecast->GetDateTimeString().c_str());
+        currentWeather->AddStringToken((int)eRootMenuST::temperature, currentForecast->GetTemperatureString().c_str());
+        currentWeather->AddStringToken((int)eRootMenuST::apparenttemperature, currentForecast->GetApparentTemperatureString().c_str());
+        currentWeather->AddStringToken((int)eRootMenuST::summary, currentForecast->GetSummary().c_str());
+        currentWeather->AddStringToken((int)eRootMenuST::icon, currentForecast->GetIcon().c_str());
+        currentWeather->AddStringToken((int)eRootMenuST::precipitationintensity, currentForecast->GetPrecipIntensityString().c_str());
+        currentWeather->AddIntToken((int)eRootMenuIT::precipitationprobability, currentForecast->GetPrecipProbabilityPercent());
+        currentWeather->AddStringToken((int)eRootMenuST::precipitationtype, currentForecast->GetPercipType().c_str());
+        currentWeather->AddIntToken((int)eRootMenuIT::humidity, currentForecast->GetHumidityPercent());
+        currentWeather->AddStringToken((int)eRootMenuST::windspeed, currentForecast->GetWindSpeedString().c_str());
+        currentWeather->AddIntToken((int)eRootMenuIT::windbearing, currentForecast->GetWindBearing());
+        currentWeather->AddStringToken((int)eRootMenuST::windbearingstring, currentForecast->GetWindBearingString().c_str());
+        currentWeather->AddStringToken((int)eRootMenuST::visibility, currentForecast->GetVisibilityString().c_str());
+        currentWeather->AddIntToken((int)eRootMenuIT::cloudcover, currentForecast->GetCloudCoverPercent());
+        currentWeather->AddStringToken((int)eRootMenuST::pressure, currentForecast->GetPressureString().c_str());
+        currentWeather->AddStringToken((int)eRootMenuST::ozone, currentForecast->GetOzoneString().c_str());
     }
+    vector<int> loopInfo;        
+    loopInfo.push_back(0);
+    loopInfo.push_back(0);
+    currentWeather->SetLoop(loopInfo);
     Add(currentWeather, (lastRootMenuElement == 0)?true:false);
 
-    skindesignerapi::cSkindesignerOsdItem *nextHours = new skindesignerapi::cSkindesignerOsdItem();
+    skindesignerapi::cSkindesignerOsdItem *nextHours = new skindesignerapi::cSkindesignerOsdItem(tkRoot);
     string itemLabelNextHours = tr("Next 48 Hours");
     nextHours->SetText(itemLabelNextHours.c_str());
-    nextHours->AddStringToken("menuitemtext", itemLabelNextHours.c_str());
-    nextHours->AddIntToken("iscurrent", 0);
-    nextHours->AddIntToken("ishourly", 1);
-    nextHours->AddIntToken("isdaily", 0);
-    nextHours->AddStringToken("city", weatherConfig.city);
-    nextHours->AddStringToken("latitude", FloatToString(weatherConfig.lat));
-    nextHours->AddStringToken("longitude", FloatToString(weatherConfig.lon));
+    nextHours->AddStringToken((int)eRootMenuST::menuitemtext, itemLabelNextHours.c_str());
+    nextHours->AddIntToken((int)eRootMenuIT::iscurrent, 0);
+    nextHours->AddIntToken((int)eRootMenuIT::ishourly, 1);
+    nextHours->AddIntToken((int)eRootMenuIT::isdaily, 0);
+    nextHours->AddStringToken((int)eRootMenuST::city, weatherConfig.city.c_str());
+    nextHours->AddStringToken((int)eRootMenuST::latitude, FloatToString(weatherConfig.lat).c_str());
+    nextHours->AddStringToken((int)eRootMenuST::longitude, FloatToString(weatherConfig.lon).c_str());
 
     cForecasts *hourlyForecast = forecastIO->GetHourlyForecast();
     if (hourlyForecast) {
-        nextHours->AddStringToken("summary", hourlyForecast->GetSummary());
-        nextHours->AddStringToken("icon", hourlyForecast->GetIcon());
+        nextHours->AddStringToken((int)eRootMenuST::summary, hourlyForecast->GetSummary().c_str());
+        nextHours->AddStringToken((int)eRootMenuST::icon, hourlyForecast->GetIcon().c_str());
 
+        int hourlyIndex = nextHours->GetLoopIndex("hourly");
+        int numHourly = hourlyForecast->NumHourly();
+
+        vector<int> loopInfo;        
+        loopInfo.push_back(numHourly);
+        loopInfo.push_back(0);
+        nextHours->SetLoop(loopInfo);
         cForecast *fc = hourlyForecast->GetFirstHourly();
-        int num = 1;
+        int i = 0;
         while (fc) {
-            map<string, string> tokens;
-            tokens.insert(pair<string,string>("hourly[num]", IntToString(num++)));
-            tokens.insert(pair<string,string>("hourly[timestamp]", fc->GetTimeString()));
-            tokens.insert(pair<string,string>("hourly[temperature]", fc->GetTemperatureString()));
-            tokens.insert(pair<string,string>("hourly[apparenttemperature]", fc->GetApparentTemperatureString()));
-            tokens.insert(pair<string,string>("hourly[summary]", fc->GetSummary()));
-            tokens.insert(pair<string,string>("hourly[icon]", fc->GetIcon()));
-            tokens.insert(pair<string,string>("hourly[precipitationintensity]", fc->GetPrecipIntensityString()));
-            tokens.insert(pair<string,string>("hourly[precipitationprobability]", IntToString(fc->GetPrecipProbabilityPercent())));
-            tokens.insert(pair<string,string>("hourly[precipitationtype]", fc->GetPercipType()));
-            tokens.insert(pair<string,string>("hourly[humidity]", IntToString(fc->GetHumidityPercent())));
-            tokens.insert(pair<string,string>("hourly[windspeed]", fc->GetWindSpeedString()));
-            tokens.insert(pair<string,string>("hourly[windbearing]", IntToString(fc->GetWindBearing())));
-            tokens.insert(pair<string,string>("hourly[windbearingstring]", fc->GetWindBearingString()));
-            tokens.insert(pair<string,string>("hourly[visibility]", fc->GetVisibilityString()));
-            tokens.insert(pair<string,string>("hourly[cloudcover]", IntToString(fc->GetCloudCoverPercent())));
-            tokens.insert(pair<string,string>("hourly[pressure]", fc->GetPressureString()));
-            tokens.insert(pair<string,string>("hourly[ozone]", fc->GetOzoneString()));
-            nextHours->AddLoopToken("hourly", tokens);
+            nextHours->AddLoopToken(hourlyIndex, i, (int)eForecastHourlyLT::num, IntToString(i+1).c_str());
+            nextHours->AddLoopToken(hourlyIndex, i, (int)eForecastHourlyLT::timestamp, fc->GetTimeString().c_str());
+            nextHours->AddLoopToken(hourlyIndex, i, (int)eForecastHourlyLT::temperature, fc->GetTemperatureString().c_str());
+            nextHours->AddLoopToken(hourlyIndex, i, (int)eForecastHourlyLT::apparenttemperature, fc->GetApparentTemperatureString().c_str());
+            nextHours->AddLoopToken(hourlyIndex, i, (int)eForecastHourlyLT::summary, fc->GetSummary().c_str());
+            nextHours->AddLoopToken(hourlyIndex, i, (int)eForecastHourlyLT::icon, fc->GetIcon().c_str());
+            nextHours->AddLoopToken(hourlyIndex, i, (int)eForecastHourlyLT::precipitationintensity, fc->GetPrecipIntensityString().c_str());
+            nextHours->AddLoopToken(hourlyIndex, i, (int)eForecastHourlyLT::precipitationprobability, IntToString(fc->GetPrecipProbabilityPercent()).c_str());
+            nextHours->AddLoopToken(hourlyIndex, i, (int)eForecastHourlyLT::precipitationtype, fc->GetPercipType().c_str());
+            nextHours->AddLoopToken(hourlyIndex, i, (int)eForecastHourlyLT::humidity, IntToString(fc->GetHumidityPercent()).c_str());
+            nextHours->AddLoopToken(hourlyIndex, i, (int)eForecastHourlyLT::windspeed, fc->GetWindSpeedString().c_str());
+            nextHours->AddLoopToken(hourlyIndex, i, (int)eForecastHourlyLT::windbearing, IntToString(fc->GetWindBearing()).c_str());
+            nextHours->AddLoopToken(hourlyIndex, i, (int)eForecastHourlyLT::windbearingstring, fc->GetWindBearingString().c_str());
+            nextHours->AddLoopToken(hourlyIndex, i, (int)eForecastHourlyLT::visibility, fc->GetWindBearingString().c_str());
+            nextHours->AddLoopToken(hourlyIndex, i, (int)eForecastHourlyLT::cloudcover, IntToString(fc->GetCloudCoverPercent()).c_str());
+            nextHours->AddLoopToken(hourlyIndex, i, (int)eForecastHourlyLT::pressure, fc->GetPressureString().c_str());
+            nextHours->AddLoopToken(hourlyIndex, i, (int)eForecastHourlyLT::ozone, fc->GetOzoneString().c_str());
             fc = hourlyForecast->GetNext();
+            i++;
         }
     }
 
     Add(nextHours, (lastRootMenuElement == 1)?true:false);
 
-    skindesignerapi::cSkindesignerOsdItem *nextDays = new skindesignerapi::cSkindesignerOsdItem();
+    skindesignerapi::cSkindesignerOsdItem *nextDays = new skindesignerapi::cSkindesignerOsdItem(tkRoot);
     string itemLabelNextDays = tr("Next 7 Days");
     nextDays->SetText(itemLabelNextDays.c_str());
-    nextDays->AddStringToken("menuitemtext", itemLabelNextDays.c_str());
-    nextDays->AddIntToken("iscurrent", 0);
-    nextDays->AddIntToken("ishourly", 0);
-    nextDays->AddIntToken("isdaily", 1);
-    nextDays->AddStringToken("city", weatherConfig.city);
-    nextDays->AddStringToken("latitude", FloatToString(weatherConfig.lat));
-    nextDays->AddStringToken("longitude", FloatToString(weatherConfig.lon));
+    nextDays->AddStringToken((int)eRootMenuST::menuitemtext, itemLabelNextDays.c_str());
+    nextDays->AddIntToken((int)eRootMenuIT::iscurrent, 0);
+    nextDays->AddIntToken((int)eRootMenuIT::ishourly, 0);
+    nextDays->AddIntToken((int)eRootMenuIT::isdaily, 1);
+    nextDays->AddStringToken((int)eRootMenuST::city, weatherConfig.city.c_str());
+    nextDays->AddStringToken((int)eRootMenuST::latitude, FloatToString(weatherConfig.lat).c_str());
+    nextDays->AddStringToken((int)eRootMenuST::longitude, FloatToString(weatherConfig.lon).c_str());
 
     cForecasts *dailyForecast = forecastIO->GetDailyForecast();
     if (dailyForecast) {
-        nextDays->AddStringToken("summary", dailyForecast->GetSummary());
-        nextDays->AddStringToken("icon", dailyForecast->GetIcon());
+        nextDays->AddStringToken((int)eRootMenuST::summary, dailyForecast->GetSummary().c_str());
+        nextDays->AddStringToken((int)eRootMenuST::icon, dailyForecast->GetIcon().c_str());
+
+        int dailyIndex = nextDays->GetLoopIndex("daily");
+        int numHourly = 0;
+        int numDaily = dailyForecast->NumDaily();
+        
+        vector<int> loopInfo;
+        loopInfo.push_back(numHourly);
+        loopInfo.push_back(numDaily);
+        nextDays->SetLoop(loopInfo);
 
         cForecast *fc = dailyForecast->GetFirstDaily();
+        int i=0;
         while (fc) {
-            map<string, string> tokens;
-            tokens.insert(pair<string,string>("daily[day]", fc->GetDateString()));
-            tokens.insert(pair<string,string>("daily[dayname]", fc->GetDayName()));
-            tokens.insert(pair<string,string>("daily[temperaturemin]", fc->GetTemperatureMinString()));
-            tokens.insert(pair<string,string>("daily[temperaturemintime]", fc->GetTemperatureMinTimeString()));
-            tokens.insert(pair<string,string>("daily[temperaturemax]", fc->GetTemperatureMaxString()));
-            tokens.insert(pair<string,string>("daily[temperaturemaxtime]", fc->GetTemperatureMaxTimeString()));
-            tokens.insert(pair<string,string>("daily[summary]", fc->GetSummary()));
-            tokens.insert(pair<string,string>("daily[icon]", fc->GetIcon()));
-            tokens.insert(pair<string,string>("daily[precipitationintensity]", fc->GetPrecipIntensityString()));
-            tokens.insert(pair<string,string>("daily[precipitationprobability]", IntToString(fc->GetPrecipProbabilityPercent())));
-            tokens.insert(pair<string,string>("daily[precipitationtype]", fc->GetPercipType()));
-            tokens.insert(pair<string,string>("daily[humidity]", IntToString(fc->GetHumidityPercent())));
-            tokens.insert(pair<string,string>("daily[windspeed]", fc->GetWindSpeedString()));
-            tokens.insert(pair<string,string>("daily[windbearing]", IntToString(fc->GetWindBearing())));
-            tokens.insert(pair<string,string>("daily[windbearingstring]", fc->GetWindBearingString()));
-            tokens.insert(pair<string,string>("daily[visibility]", fc->GetVisibilityString()));
-            tokens.insert(pair<string,string>("daily[cloudcover]", IntToString(fc->GetCloudCoverPercent())));
-            tokens.insert(pair<string,string>("daily[pressure]", fc->GetPressureString()));
-            tokens.insert(pair<string,string>("daily[ozone]", fc->GetOzoneString()));
-            nextDays->AddLoopToken("daily", tokens);
+            nextDays->AddLoopToken(dailyIndex, i, (int)eForecastDailyLT::day, fc->GetDateString().c_str());
+            nextDays->AddLoopToken(dailyIndex, i, (int)eForecastDailyLT::dayname, fc->GetDayName().c_str());
+            nextDays->AddLoopToken(dailyIndex, i, (int)eForecastDailyLT::temperaturemin, fc->GetTemperatureMinString().c_str());
+            nextDays->AddLoopToken(dailyIndex, i, (int)eForecastDailyLT::temperaturemintime, fc->GetTemperatureMinTimeString().c_str());
+            nextDays->AddLoopToken(dailyIndex, i, (int)eForecastDailyLT::temperaturemax, fc->GetTemperatureMaxString().c_str());
+            nextDays->AddLoopToken(dailyIndex, i, (int)eForecastDailyLT::temperaturemaxtime, fc->GetTemperatureMaxTimeString().c_str());
+            nextDays->AddLoopToken(dailyIndex, i, (int)eForecastDailyLT::summary, fc->GetSummary().c_str());
+            nextDays->AddLoopToken(dailyIndex, i, (int)eForecastDailyLT::icon, fc->GetIcon().c_str());
+            nextDays->AddLoopToken(dailyIndex, i, (int)eForecastDailyLT::precipitationintensity, fc->GetPrecipIntensityString().c_str());
+            nextDays->AddLoopToken(dailyIndex, i, (int)eForecastDailyLT::precipitationprobability, IntToString(fc->GetPrecipProbabilityPercent()).c_str());
+            nextDays->AddLoopToken(dailyIndex, i, (int)eForecastDailyLT::precipitationtype, fc->GetPercipType().c_str());
+            nextDays->AddLoopToken(dailyIndex, i, (int)eForecastDailyLT::humidity, IntToString(fc->GetHumidityPercent()).c_str());
+            nextDays->AddLoopToken(dailyIndex, i, (int)eForecastDailyLT::windspeed, fc->GetWindSpeedString().c_str());
+            nextDays->AddLoopToken(dailyIndex, i, (int)eForecastDailyLT::windbearing, IntToString(fc->GetWindBearing()).c_str());
+            nextDays->AddLoopToken(dailyIndex, i, (int)eForecastDailyLT::windbearingstring, fc->GetWindBearingString().c_str());
+            nextDays->AddLoopToken(dailyIndex, i, (int)eForecastDailyLT::visibility, fc->GetVisibilityString().c_str());
+            nextDays->AddLoopToken(dailyIndex, i, (int)eForecastDailyLT::cloudcover, IntToString(fc->GetCloudCoverPercent()).c_str());
+            nextDays->AddLoopToken(dailyIndex, i, (int)eForecastDailyLT::pressure, fc->GetPressureString().c_str());
+            nextDays->AddLoopToken(dailyIndex, i, (int)eForecastDailyLT::ozone, fc->GetOzoneString().c_str());
             fc = dailyForecast->GetNext();
+            i++;
         }
     }
 
@@ -198,10 +217,13 @@ void cWeatherOsd::SetRootMenu(void) {
 
 void cWeatherOsd::SetDetailViewCurrent(void) {
     isDetailedView = true;
-    SetPluginMenu(meDetailCurrent, skindesignerapi::mtText);
-    ClearTokens();
+    SetPluginMenu((int)eMenus::detailCurrent, skindesignerapi::mtText);
     Clear();
     SetTitle(tr("Current Weather"));
+
+    skindesignerapi::cTokenContainer *tkCurrent = GetTokenContainer((int)eMenus::detailCurrent);
+    SetTokenContainer(tkCurrent);
+    ClearTokens();
 
     cForecast *current = NULL;
     cForecasts *daily = NULL;
@@ -243,41 +265,44 @@ void cWeatherOsd::SetDetailViewCurrent(void) {
     plainText << tr("Ozone") << ": " << current->GetOzoneString() << " DU" << "\n";
     SetText(plainText.str().c_str());
 
-
-    AddStringToken("menuheader", tr("Current Weather"));
-    AddStringToken("city", weatherConfig.city);
-    AddStringToken("latitude", FloatToString(weatherConfig.lat));
-    AddStringToken("longitude", FloatToString(weatherConfig.lon));
-    AddStringToken("timestamp", current->GetDateTimeString());
-    AddStringToken("temperature", current->GetTemperatureString());
-    AddStringToken("apparenttemperature", current->GetApparentTemperatureString());
-    AddStringToken("mintemperature", today->GetTemperatureMinString());
-    AddStringToken("maxtemperature", today->GetTemperatureMaxString());
-    AddStringToken("summary", current->GetSummary());
-    AddStringToken("icon", current->GetIcon());
-    AddStringToken("precipitationintensity", current->GetPrecipIntensityString());
-    AddIntToken("precipitationprobability", current->GetPrecipProbabilityPercent());
-    AddStringToken("precipitationtype", current->GetPercipType());
-    AddIntToken("humidity", current->GetHumidityPercent());
-    AddStringToken("windspeed", current->GetWindSpeedString());
-    AddIntToken("windbearing", current->GetWindBearing());
-    AddStringToken("windbearingstring", current->GetWindBearingString());
-    AddStringToken("visibility", current->GetVisibilityString());
-    AddIntToken("cloudcover", current->GetCloudCoverPercent());
-    AddStringToken("pressure", current->GetPressureString());
-    AddStringToken("ozone", current->GetOzoneString());
+    AddStringToken((int)eDetailCurrentST::menuheader, tr("Current Weather"));
+    AddStringToken((int)eDetailCurrentST::city, weatherConfig.city.c_str());
+    AddStringToken((int)eDetailCurrentST::latitude, FloatToString(weatherConfig.lat).c_str());
+    AddStringToken((int)eDetailCurrentST::longitude, FloatToString(weatherConfig.lon).c_str());
+    AddStringToken((int)eDetailCurrentST::timestamp, current->GetDateTimeString().c_str());
+    AddStringToken((int)eDetailCurrentST::temperature, current->GetTemperatureString().c_str());
+    AddStringToken((int)eDetailCurrentST::apparenttemperature, current->GetApparentTemperatureString().c_str());
+    AddStringToken((int)eDetailCurrentST::mintemperature, today->GetTemperatureMinString().c_str());
+    AddStringToken((int)eDetailCurrentST::maxtemperature, today->GetTemperatureMaxString().c_str());
+    AddStringToken((int)eDetailCurrentST::summary, current->GetSummary().c_str());
+    AddStringToken((int)eDetailCurrentST::icon, current->GetIcon().c_str());
+    AddStringToken((int)eDetailCurrentST::precipitationintensity, current->GetPrecipIntensityString().c_str());
+    AddIntToken((int)eDetailCurrentIT::precipitationprobability, current->GetPrecipProbabilityPercent());
+    AddStringToken((int)eDetailCurrentST::precipitationtype, current->GetPercipType().c_str());
+    AddIntToken((int)eDetailCurrentIT::humidity, current->GetHumidityPercent());
+    AddStringToken((int)eDetailCurrentST::windspeed, current->GetWindSpeedString().c_str());
+    AddIntToken((int)eDetailCurrentIT::windbearing, current->GetWindBearing());
+    AddStringToken((int)eDetailCurrentST::windbearingstring, current->GetWindBearingString().c_str());
+    AddStringToken((int)eDetailCurrentST::visibility, current->GetVisibilityString().c_str());
+    AddIntToken((int)eDetailCurrentIT::cloudcover, current->GetCloudCoverPercent());
+    AddStringToken((int)eDetailCurrentST::pressure, current->GetPressureString().c_str());
+    AddStringToken((int)eDetailCurrentST::ozone, current->GetOzoneString().c_str());
 
     forecastIO->UnlockForecasts();
     
     Display();
+
 }
 
 void cWeatherOsd::SetDetailViewHourly(void) {
     isDetailedView = true;
-    SetPluginMenu(meDetailHourly, skindesignerapi::mtText);
+    SetPluginMenu((int)eMenus::detailHourly, skindesignerapi::mtText);
     Clear();
-    ClearTokens();
     SetTitle(tr("Weather in the next 48 Hours"));
+
+    skindesignerapi::cTokenContainer *tkHourly = GetTokenContainer((int)eMenus::detailHourly);
+    SetTokenContainer(tkHourly);
+    ClearTokens();
 
     forecastIO->LockForecasts();
     cForecasts *hourly = forecastIO->GetHourlyForecast();
@@ -287,36 +312,40 @@ void cWeatherOsd::SetDetailViewHourly(void) {
     }
 
     stringstream plainText;
+
+    AddStringToken((int)eDetailHourlyST::menuheader, tr("Weather in the next 48 Hours"));
+    AddStringToken((int)eDetailHourlyST::summary, hourly->GetSummary().c_str());
+    AddStringToken((int)eDetailHourlyST::icon, hourly->GetIcon().c_str());
+    AddStringToken((int)eDetailHourlyST::city, weatherConfig.city.c_str());
+    AddStringToken((int)eDetailHourlyST::latitude, FloatToString(weatherConfig.lat).c_str());
+    AddStringToken((int)eDetailHourlyST::longitude, FloatToString(weatherConfig.lon).c_str());
+
+    int hourlyIndex = GetLoopIndex("hourly");
+    int numHourly = hourly->NumHourly();
+    vector<int> loopInfo;        
+    loopInfo.push_back(numHourly);
+    SetLoop(loopInfo);
+
     cForecast *fc = hourly->GetFirstHourly();
-
-    AddStringToken("menuheader", tr("Weather in the next 48 Hours"));
-    AddStringToken("summary", hourly->GetSummary());
-    AddStringToken("icon", hourly->GetIcon());
-    AddStringToken("city", weatherConfig.city);
-    AddStringToken("latitude", FloatToString(weatherConfig.lat));
-    AddStringToken("longitude", FloatToString(weatherConfig.lon));
-
-    int num = 1;
+    int i = 0;
     while (fc) {
-        map<string, string> tokens;
-        tokens.insert(pair<string,string>("hourly[num]", IntToString(num++)));
-        tokens.insert(pair<string,string>("hourly[timestamp]", fc->GetTimeString()));
-        tokens.insert(pair<string,string>("hourly[temperature]", fc->GetTemperatureString()));
-        tokens.insert(pair<string,string>("hourly[apparenttemperature]", fc->GetApparentTemperatureString()));
-        tokens.insert(pair<string,string>("hourly[summary]", fc->GetSummary()));
-        tokens.insert(pair<string,string>("hourly[icon]", fc->GetIcon()));
-        tokens.insert(pair<string,string>("hourly[precipitationintensity]", fc->GetPrecipIntensityString()));
-        tokens.insert(pair<string,string>("hourly[precipitationprobability]", IntToString(fc->GetPrecipProbabilityPercent())));
-        tokens.insert(pair<string,string>("hourly[precipitationtype]", fc->GetPercipType()));
-        tokens.insert(pair<string,string>("hourly[humidity]", IntToString(fc->GetHumidityPercent())));
-        tokens.insert(pair<string,string>("hourly[windspeed]", fc->GetWindSpeedString()));
-        tokens.insert(pair<string,string>("hourly[windbearing]", IntToString(fc->GetWindBearing())));
-        tokens.insert(pair<string,string>("hourly[windbearingstring]", fc->GetWindBearingString()));
-        tokens.insert(pair<string,string>("hourly[visibility]", fc->GetVisibilityString()));
-        tokens.insert(pair<string,string>("hourly[cloudcover]", IntToString(fc->GetCloudCoverPercent())));
-        tokens.insert(pair<string,string>("hourly[pressure]", fc->GetPressureString()));
-        tokens.insert(pair<string,string>("hourly[ozone]", fc->GetOzoneString()));
-        AddLoopToken("hourly", tokens);
+        AddLoopToken(hourlyIndex, i, (int)eForecastHourlyLT::num, IntToString(i+1).c_str());
+        AddLoopToken(hourlyIndex, i, (int)eForecastHourlyLT::timestamp, fc->GetTimeString().c_str());
+        AddLoopToken(hourlyIndex, i, (int)eForecastHourlyLT::temperature, fc->GetTemperatureString().c_str());
+        AddLoopToken(hourlyIndex, i, (int)eForecastHourlyLT::apparenttemperature, fc->GetApparentTemperatureString().c_str());
+        AddLoopToken(hourlyIndex, i, (int)eForecastHourlyLT::summary, fc->GetSummary().c_str());
+        AddLoopToken(hourlyIndex, i, (int)eForecastHourlyLT::icon, fc->GetIcon().c_str());
+        AddLoopToken(hourlyIndex, i, (int)eForecastHourlyLT::precipitationintensity, fc->GetPrecipIntensityString().c_str());
+        AddLoopToken(hourlyIndex, i, (int)eForecastHourlyLT::precipitationprobability, IntToString(fc->GetPrecipProbabilityPercent()).c_str());
+        AddLoopToken(hourlyIndex, i, (int)eForecastHourlyLT::precipitationtype, fc->GetPercipType().c_str());
+        AddLoopToken(hourlyIndex, i, (int)eForecastHourlyLT::humidity, IntToString(fc->GetHumidityPercent()).c_str());
+        AddLoopToken(hourlyIndex, i, (int)eForecastHourlyLT::windspeed, fc->GetWindSpeedString().c_str());
+        AddLoopToken(hourlyIndex, i, (int)eForecastHourlyLT::windbearing, IntToString(fc->GetWindBearing()).c_str());
+        AddLoopToken(hourlyIndex, i, (int)eForecastHourlyLT::windbearingstring, fc->GetWindBearingString().c_str());
+        AddLoopToken(hourlyIndex, i, (int)eForecastHourlyLT::visibility, fc->GetWindBearingString().c_str());
+        AddLoopToken(hourlyIndex, i, (int)eForecastHourlyLT::cloudcover, IntToString(fc->GetCloudCoverPercent()).c_str());
+        AddLoopToken(hourlyIndex, i, (int)eForecastHourlyLT::pressure, fc->GetPressureString().c_str());
+        AddLoopToken(hourlyIndex, i, (int)eForecastHourlyLT::ozone, fc->GetOzoneString().c_str());
     
         plainText << fc->GetDateTimeString() << ": " <<  fc->GetSummary() << "\n";
         plainText << tr("Temperature") << ": " << fc->GetTemperatureString() << "°C, " << tr("felt") << " " << fc->GetApparentTemperatureString() << "°C""\n";
@@ -326,6 +355,7 @@ void cWeatherOsd::SetDetailViewHourly(void) {
         plainText << "\n";
 
         fc = hourly->GetNext();
+        i++;
     }
     forecastIO->UnlockForecasts();
 
@@ -335,10 +365,13 @@ void cWeatherOsd::SetDetailViewHourly(void) {
 
 void cWeatherOsd::SetDetailViewDaily(void) {
     isDetailedView = true;
-    SetPluginMenu(meDetailDaily, skindesignerapi::mtText);
+    SetPluginMenu((int)eMenus::detailDaily, skindesignerapi::mtText);
     Clear();
-    ClearTokens();
     SetTitle(tr("Weather the next 7 days"));
+
+    skindesignerapi::cTokenContainer *tkDaily = GetTokenContainer((int)eMenus::detailDaily);
+    SetTokenContainer(tkDaily);
+    ClearTokens();
 
     forecastIO->LockForecasts();
     cForecasts *daily = forecastIO->GetDailyForecast();
@@ -348,38 +381,43 @@ void cWeatherOsd::SetDetailViewDaily(void) {
     }
 
     stringstream plainText;
+
+    AddStringToken((int)eDetailDailyST::menuheader, tr("Weather the next 7 days"));
+    AddStringToken((int)eDetailDailyST::summary, daily->GetSummary().c_str());
+    AddStringToken((int)eDetailDailyST::icon, daily->GetIcon().c_str());
+    AddStringToken((int)eDetailDailyST::city, weatherConfig.city.c_str());
+    AddStringToken((int)eDetailDailyST::latitude, FloatToString(weatherConfig.lat).c_str());
+    AddStringToken((int)eDetailDailyST::longitude, FloatToString(weatherConfig.lon).c_str());
+
+    int dailyIndex = GetLoopIndex("daily");
+    int numDaily = daily->NumDaily();
+    vector<int> loopInfo;        
+    loopInfo.push_back(numDaily);
+    SetLoop(loopInfo);
+
     cForecast *fc = daily->GetFirstDaily();
-
-    AddStringToken("menuheader", tr("Weather the next 7 days"));
-    AddStringToken("summary", daily->GetSummary());
-    AddStringToken("icon", daily->GetIcon());
-    AddStringToken("city", weatherConfig.city);
-    AddStringToken("latitude", FloatToString(weatherConfig.lat));
-    AddStringToken("longitude", FloatToString(weatherConfig.lon));
-
+    int i=0;
     while (fc) {
-        map<string, string> tokens;
-        tokens.insert(pair<string,string>("daily[day]", fc->GetDateString()));
-        tokens.insert(pair<string,string>("daily[dayname]", fc->GetDayName()));
-        tokens.insert(pair<string,string>("daily[temperaturemin]", fc->GetTemperatureMinString()));
-        tokens.insert(pair<string,string>("daily[temperaturemintime]", fc->GetTemperatureMinTimeString()));
-        tokens.insert(pair<string,string>("daily[temperaturemax]", fc->GetTemperatureMaxString()));
-        tokens.insert(pair<string,string>("daily[temperaturemaxtime]", fc->GetTemperatureMaxTimeString()));
-        tokens.insert(pair<string,string>("daily[summary]", fc->GetSummary()));
-        tokens.insert(pair<string,string>("daily[icon]", fc->GetIcon()));
-        tokens.insert(pair<string,string>("daily[precipitationintensity]", fc->GetPrecipIntensityString()));
-        tokens.insert(pair<string,string>("daily[precipitationprobability]", IntToString(fc->GetPrecipProbabilityPercent())));
-        tokens.insert(pair<string,string>("daily[precipitationtype]", fc->GetPercipType()));
-        tokens.insert(pair<string,string>("daily[humidity]", IntToString(fc->GetHumidityPercent())));
-        tokens.insert(pair<string,string>("daily[windspeed]", fc->GetWindSpeedString()));
-        tokens.insert(pair<string,string>("daily[windbearing]", IntToString(fc->GetWindBearing())));
-        tokens.insert(pair<string,string>("daily[windbearingstring]", fc->GetWindBearingString()));
-        tokens.insert(pair<string,string>("daily[visibility]", fc->GetVisibilityString()));
-        tokens.insert(pair<string,string>("daily[cloudcover]", IntToString(fc->GetCloudCoverPercent())));
-        tokens.insert(pair<string,string>("daily[pressure]", fc->GetPressureString()));
-        tokens.insert(pair<string,string>("daily[ozone]", fc->GetOzoneString()));
-        AddLoopToken("daily", tokens);
-    
+        AddLoopToken(dailyIndex, i, (int)eForecastDailyLT::day, fc->GetDateString().c_str());
+        AddLoopToken(dailyIndex, i, (int)eForecastDailyLT::dayname, fc->GetDayName().c_str());
+        AddLoopToken(dailyIndex, i, (int)eForecastDailyLT::temperaturemin, fc->GetTemperatureMinString().c_str());
+        AddLoopToken(dailyIndex, i, (int)eForecastDailyLT::temperaturemintime, fc->GetTemperatureMinTimeString().c_str());
+        AddLoopToken(dailyIndex, i, (int)eForecastDailyLT::temperaturemax, fc->GetTemperatureMaxString().c_str());
+        AddLoopToken(dailyIndex, i, (int)eForecastDailyLT::temperaturemaxtime, fc->GetTemperatureMaxTimeString().c_str());
+        AddLoopToken(dailyIndex, i, (int)eForecastDailyLT::summary, fc->GetSummary().c_str());
+        AddLoopToken(dailyIndex, i, (int)eForecastDailyLT::icon, fc->GetIcon().c_str());
+        AddLoopToken(dailyIndex, i, (int)eForecastDailyLT::precipitationintensity, fc->GetPrecipIntensityString().c_str());
+        AddLoopToken(dailyIndex, i, (int)eForecastDailyLT::precipitationprobability, IntToString(fc->GetPrecipProbabilityPercent()).c_str());
+        AddLoopToken(dailyIndex, i, (int)eForecastDailyLT::precipitationtype, fc->GetPercipType().c_str());
+        AddLoopToken(dailyIndex, i, (int)eForecastDailyLT::humidity, IntToString(fc->GetHumidityPercent()).c_str());
+        AddLoopToken(dailyIndex, i, (int)eForecastDailyLT::windspeed, fc->GetWindSpeedString().c_str());
+        AddLoopToken(dailyIndex, i, (int)eForecastDailyLT::windbearing, IntToString(fc->GetWindBearing()).c_str());
+        AddLoopToken(dailyIndex, i, (int)eForecastDailyLT::windbearingstring, fc->GetWindBearingString().c_str());
+        AddLoopToken(dailyIndex, i, (int)eForecastDailyLT::visibility, fc->GetVisibilityString().c_str());
+        AddLoopToken(dailyIndex, i, (int)eForecastDailyLT::cloudcover, IntToString(fc->GetCloudCoverPercent()).c_str());
+        AddLoopToken(dailyIndex, i, (int)eForecastDailyLT::pressure, fc->GetPressureString().c_str());
+        AddLoopToken(dailyIndex, i, (int)eForecastDailyLT::ozone, fc->GetOzoneString().c_str());
+
         plainText << fc->GetDayName() << " " << fc->GetDateString() << ": " <<  fc->GetSummary() << "\n";
         plainText << tr("Minimum Temperature") << ": " << fc->GetTemperatureMinString() << "°C " << tr("at") << " " << fc->GetTemperatureMinTimeString() << " ,";
         plainText << tr("Maximum Temperature") << ": " << fc->GetTemperatureMaxString() << "°C " << tr("at") << " " << fc->GetTemperatureMaxTimeString() << "\n";
@@ -391,9 +429,148 @@ void cWeatherOsd::SetDetailViewDaily(void) {
         plainText << "\n";
 
         fc = daily->GetNext();
+        i++;
     }
     forecastIO->UnlockForecasts();
     
     SetText(plainText.str().c_str());
     Display();
+}
+
+void cWeatherOsd::DefineTokens(eMenus menu, skindesignerapi::cTokenContainer *tk) {
+    if (menu == eMenus::root) {
+        tk->DefineIntToken("{current}", (int)eRootMenuIT::current);
+        tk->DefineIntToken("{iscurrent}", (int)eRootMenuIT::iscurrent);
+        tk->DefineIntToken("{ishourly}", (int)eRootMenuIT::ishourly);
+        tk->DefineIntToken("{isdaily}", (int)eRootMenuIT::isdaily);
+        tk->DefineIntToken("{precipitationprobability}", (int)eRootMenuIT::precipitationprobability);
+        tk->DefineIntToken("{humidity}", (int)eRootMenuIT::humidity);
+        tk->DefineIntToken("{windbearing}", (int)eRootMenuIT::windbearing);
+        tk->DefineIntToken("{cloudcover}", (int)eRootMenuIT::cloudcover);
+        tk->DefineStringToken("{menuitemtext}", (int)eRootMenuST::menuitemtext);
+        tk->DefineStringToken("{city}", (int)eRootMenuST::city);
+        tk->DefineStringToken("{latitude}", (int)eRootMenuST::latitude);
+        tk->DefineStringToken("{longitude}", (int)eRootMenuST::longitude);
+        tk->DefineStringToken("{timestamp}", (int)eRootMenuST::timestamp);
+        tk->DefineStringToken("{temperature}", (int)eRootMenuST::temperature);
+        tk->DefineStringToken("{apparenttemperature}", (int)eRootMenuST::apparenttemperature);
+        tk->DefineStringToken("{summary}", (int)eRootMenuST::summary);
+        tk->DefineStringToken("{icon}", (int)eRootMenuST::icon);
+        tk->DefineStringToken("{precipitationintensity}", (int)eRootMenuST::precipitationintensity);
+        tk->DefineStringToken("{precipitationtype}", (int)eRootMenuST::precipitationtype);
+        tk->DefineStringToken("{windspeed}", (int)eRootMenuST::windspeed);
+        tk->DefineStringToken("{windbearingstring}", (int)eRootMenuST::windbearingstring);
+        tk->DefineStringToken("{visibility}", (int)eRootMenuST::visibility);
+        tk->DefineStringToken("{pressure}", (int)eRootMenuST::pressure);
+        tk->DefineStringToken("{ozone}", (int)eRootMenuST::ozone);
+        tk->DefineLoopToken("{hourly[num]}", (int)eForecastHourlyLT::num);
+        tk->DefineLoopToken("{hourly[timestamp]}", (int)eForecastHourlyLT::timestamp);
+        tk->DefineLoopToken("{hourly[temperature]}", (int)eForecastHourlyLT::temperature);
+        tk->DefineLoopToken("{hourly[apparenttemperature]}", (int)eForecastHourlyLT::apparenttemperature);
+        tk->DefineLoopToken("{hourly[summary]}", (int)eForecastHourlyLT::summary);
+        tk->DefineLoopToken("{hourly[icon]}", (int)eForecastHourlyLT::icon);
+        tk->DefineLoopToken("{hourly[precipitationintensity]}", (int)eForecastHourlyLT::precipitationintensity);
+        tk->DefineLoopToken("{hourly[precipitationprobability]}", (int)eForecastHourlyLT::precipitationprobability);
+        tk->DefineLoopToken("{hourly[precipitationtype]}", (int)eForecastHourlyLT::precipitationtype);
+        tk->DefineLoopToken("{hourly[humidity]}", (int)eForecastHourlyLT::humidity);
+        tk->DefineLoopToken("{hourly[windspeed]}", (int)eForecastHourlyLT::windspeed);
+        tk->DefineLoopToken("{hourly[windbearing]}", (int)eForecastHourlyLT::windbearing);
+        tk->DefineLoopToken("{hourly[windbearingstring]}", (int)eForecastHourlyLT::windbearingstring);
+        tk->DefineLoopToken("{hourly[visibility]}", (int)eForecastHourlyLT::visibility);
+        tk->DefineLoopToken("{hourly[cloudcover]}", (int)eForecastHourlyLT::cloudcover);
+        tk->DefineLoopToken("{hourly[pressure]}", (int)eForecastHourlyLT::pressure);
+        tk->DefineLoopToken("{hourly[ozone]}", (int)eForecastHourlyLT::ozone);
+        tk->DefineLoopToken("{daily[day]}", (int)eForecastDailyLT::day);
+        tk->DefineLoopToken("{daily[dayname]}", (int)eForecastDailyLT::dayname);
+        tk->DefineLoopToken("{daily[temperaturemin]}", (int)eForecastDailyLT::temperaturemin);
+        tk->DefineLoopToken("{daily[temperaturemintime]}", (int)eForecastDailyLT::temperaturemintime);
+        tk->DefineLoopToken("{daily[temperaturemax]}", (int)eForecastDailyLT::temperaturemax);
+        tk->DefineLoopToken("{daily[temperaturemaxtime]}", (int)eForecastDailyLT::temperaturemaxtime);
+        tk->DefineLoopToken("{daily[summary]}", (int)eForecastDailyLT::summary);
+        tk->DefineLoopToken("{daily[icon]}", (int)eForecastDailyLT::icon);
+        tk->DefineLoopToken("{daily[precipitationintensity]}", (int)eForecastDailyLT::precipitationintensity);
+        tk->DefineLoopToken("{daily[precipitationprobability]}", (int)eForecastDailyLT::precipitationprobability);
+        tk->DefineLoopToken("{daily[precipitationtype]}", (int)eForecastDailyLT::precipitationtype);
+        tk->DefineLoopToken("{daily[humidity]}", (int)eForecastDailyLT::humidity);
+        tk->DefineLoopToken("{daily[windspeed]}", (int)eForecastDailyLT::windspeed);
+        tk->DefineLoopToken("{daily[windbearing]}", (int)eForecastDailyLT::windbearing);
+        tk->DefineLoopToken("{daily[windbearingstring]}", (int)eForecastDailyLT::windbearingstring);
+        tk->DefineLoopToken("{daily[visibility]}", (int)eForecastDailyLT::visibility);
+        tk->DefineLoopToken("{daily[cloudcover]}", (int)eForecastDailyLT::cloudcover);
+        tk->DefineLoopToken("{daily[pressure]}", (int)eForecastDailyLT::pressure);
+        tk->DefineLoopToken("{daily[ozone]}", (int)eForecastDailyLT::ozone);
+    } else if (menu == eMenus::detailCurrent) {
+        tk->DefineIntToken("{precipitationprobability}", (int)eDetailCurrentIT::precipitationprobability);
+        tk->DefineIntToken("{humidity}", (int)eDetailCurrentIT::humidity);
+        tk->DefineIntToken("{windbearing}", (int)eDetailCurrentIT::windbearing);
+        tk->DefineIntToken("{cloudcover}", (int)eDetailCurrentIT::cloudcover);
+        tk->DefineStringToken("{menuheader}", (int)eDetailCurrentST::menuheader);
+        tk->DefineStringToken("{city}", (int)eDetailCurrentST::city);
+        tk->DefineStringToken("{latitude}", (int)eDetailCurrentST::latitude);
+        tk->DefineStringToken("{longitude}", (int)eDetailCurrentST::longitude);
+        tk->DefineStringToken("{timestamp}", (int)eDetailCurrentST::timestamp);
+        tk->DefineStringToken("{temperature}", (int)eDetailCurrentST::temperature);
+        tk->DefineStringToken("{apparenttemperature}", (int)eDetailCurrentST::apparenttemperature);
+        tk->DefineStringToken("{mintemperature}", (int)eDetailCurrentST::mintemperature);
+        tk->DefineStringToken("{maxtemperature}", (int)eDetailCurrentST::maxtemperature);
+        tk->DefineStringToken("{summary}", (int)eDetailCurrentST::summary);
+        tk->DefineStringToken("{icon}", (int)eDetailCurrentST::icon);
+        tk->DefineStringToken("{precipitationintensity}", (int)eDetailCurrentST::precipitationintensity);
+        tk->DefineStringToken("{precipitationtype}", (int)eDetailCurrentST::precipitationtype);
+        tk->DefineStringToken("{windspeed}", (int)eDetailCurrentST::windspeed);
+        tk->DefineStringToken("{windbearingstring}", (int)eDetailCurrentST::windbearingstring);
+        tk->DefineStringToken("{visibility}", (int)eDetailCurrentST::visibility);
+        tk->DefineStringToken("{pressure}", (int)eDetailCurrentST::pressure);
+        tk->DefineStringToken("{ozone}", (int)eDetailCurrentST::ozone);
+    } else if (menu == eMenus::detailHourly) {
+        tk->DefineStringToken("{menuheader}", (int)eDetailHourlyST::menuheader);
+        tk->DefineStringToken("{summary}", (int)eDetailHourlyST::summary);
+        tk->DefineStringToken("{icon}", (int)eDetailHourlyST::icon);
+        tk->DefineStringToken("{city}", (int)eDetailHourlyST::city);
+        tk->DefineStringToken("{latitude}", (int)eDetailHourlyST::latitude);
+        tk->DefineStringToken("{longitude}", (int)eDetailHourlyST::longitude);
+        tk->DefineLoopToken("{hourly[num]}", (int)eForecastHourlyLT::num);
+        tk->DefineLoopToken("{hourly[timestamp]}", (int)eForecastHourlyLT::timestamp);
+        tk->DefineLoopToken("{hourly[temperature]}", (int)eForecastHourlyLT::temperature);
+        tk->DefineLoopToken("{hourly[apparenttemperature]}", (int)eForecastHourlyLT::apparenttemperature);
+        tk->DefineLoopToken("{hourly[summary]}", (int)eForecastHourlyLT::summary);
+        tk->DefineLoopToken("{hourly[icon]}", (int)eForecastHourlyLT::icon);
+        tk->DefineLoopToken("{hourly[precipitationintensity]}", (int)eForecastHourlyLT::precipitationintensity);
+        tk->DefineLoopToken("{hourly[precipitationprobability]}", (int)eForecastHourlyLT::precipitationprobability);
+        tk->DefineLoopToken("{hourly[precipitationtype]}", (int)eForecastHourlyLT::precipitationtype);
+        tk->DefineLoopToken("{hourly[humidity]}", (int)eForecastHourlyLT::humidity);
+        tk->DefineLoopToken("{hourly[windspeed]}", (int)eForecastHourlyLT::windspeed);
+        tk->DefineLoopToken("{hourly[windbearing]}", (int)eForecastHourlyLT::windbearing);
+        tk->DefineLoopToken("{hourly[windbearingstring]}", (int)eForecastHourlyLT::windbearingstring);
+        tk->DefineLoopToken("{hourly[visibility]}", (int)eForecastHourlyLT::visibility);
+        tk->DefineLoopToken("{hourly[cloudcover]}", (int)eForecastHourlyLT::cloudcover);
+        tk->DefineLoopToken("{hourly[pressure]}", (int)eForecastHourlyLT::pressure);
+        tk->DefineLoopToken("{hourly[ozone]}", (int)eForecastHourlyLT::ozone);
+    } else if (menu == eMenus::detailDaily) {
+        tk->DefineStringToken("{menuheader}", (int)eDetailDailyST::menuheader);
+        tk->DefineStringToken("{summary}", (int)eDetailDailyST::summary);
+        tk->DefineStringToken("{icon}", (int)eDetailDailyST::icon);
+        tk->DefineStringToken("{city}", (int)eDetailDailyST::city);
+        tk->DefineStringToken("{latitude}", (int)eDetailDailyST::latitude);
+        tk->DefineStringToken("{longitude}", (int)eDetailDailyST::longitude);
+        tk->DefineLoopToken("{daily[day]}", (int)eForecastDailyLT::day);
+        tk->DefineLoopToken("{daily[dayname]}", (int)eForecastDailyLT::dayname);
+        tk->DefineLoopToken("{daily[temperaturemin]}", (int)eForecastDailyLT::temperaturemin);
+        tk->DefineLoopToken("{daily[temperaturemintime]}", (int)eForecastDailyLT::temperaturemintime);
+        tk->DefineLoopToken("{daily[temperaturemax]}", (int)eForecastDailyLT::temperaturemax);
+        tk->DefineLoopToken("{daily[temperaturemaxtime]}", (int)eForecastDailyLT::temperaturemaxtime);
+        tk->DefineLoopToken("{daily[summary]}", (int)eForecastDailyLT::summary);
+        tk->DefineLoopToken("{daily[icon]}", (int)eForecastDailyLT::icon);
+        tk->DefineLoopToken("{daily[precipitationintensity]}", (int)eForecastDailyLT::precipitationintensity);
+        tk->DefineLoopToken("{daily[precipitationprobability]}", (int)eForecastDailyLT::precipitationprobability);
+        tk->DefineLoopToken("{daily[precipitationtype]}", (int)eForecastDailyLT::precipitationtype);
+        tk->DefineLoopToken("{daily[humidity]}", (int)eForecastDailyLT::humidity);
+        tk->DefineLoopToken("{daily[windspeed]}", (int)eForecastDailyLT::windspeed);
+        tk->DefineLoopToken("{daily[windbearing]}", (int)eForecastDailyLT::windbearing);
+        tk->DefineLoopToken("{daily[windbearingstring]}", (int)eForecastDailyLT::windbearingstring);
+        tk->DefineLoopToken("{daily[visibility]}", (int)eForecastDailyLT::visibility);
+        tk->DefineLoopToken("{daily[cloudcover]}", (int)eForecastDailyLT::cloudcover);
+        tk->DefineLoopToken("{daily[pressure]}", (int)eForecastDailyLT::pressure);
+        tk->DefineLoopToken("{daily[ozone]}", (int)eForecastDailyLT::ozone);
+    }
 }

@@ -22,6 +22,8 @@ public:
     void SetForecastType(eForecastType type) { this->type = type; };
     string GetSummary(void) { return summary; };
     string GetIcon(void) { return icon; };
+    int NumHourly(void);
+    int NumDaily(void);
     cForecast *GetForecast(int dataPoint);
     cForecast *GetCurrent(void);
     cForecast *GetFirstHourly(void);
